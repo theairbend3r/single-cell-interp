@@ -1,3 +1,5 @@
-# How does a single-cell autoencoder represent the interferon response?
+# single-cell-interp
+
+How does a single-cell autoencoder represent the interferon response?
 
 _Work in progress._
