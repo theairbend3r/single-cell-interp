@@ -7,7 +7,7 @@ app = marimo.App(width="medium")
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # Can we predict the cellular response to drug perturbation?
+    # How does a single-cell autoencoder represent the interferon response?
     """)
 
 
