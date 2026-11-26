@@ -7,7 +7,7 @@ app = marimo.App(width="medium")
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # can we predict the cellular response to drug perturbation?
+    # Can we predict the cellular response to drug perturbation?
     """)
 
 
@@ -112,9 +112,7 @@ def _(df_obs, plt, sns):
             data=df_obs.to_pandas(), y="cell_type", hue="label", ax=axes["b"]
         ).tick_params(axis="x", labelrotation=45)
 
-        sns.countplot(
-            data=df_obs.to_pandas(), y="replicate", hue="label", ax=axes["c"]
-        )
+        sns.countplot(data=df_obs.to_pandas(), y="replicate", hue="label", ax=axes["c"])
 
         sns.countplot(
             data=df_obs.to_pandas(),
@@ -160,9 +158,7 @@ def _(df_obs, plt, sns):
             split=True,
             inner="quartile",
             ax=axes["a"],
-        ).set(
-            title="number of detected mRNA molecules across all genes in a cell"
-        )
+        ).set(title="number of detected mRNA molecules across all genes in a cell")
         axes["a"].tick_params(axis="x", labelrotation=45)
 
         sns.violinplot(
@@ -174,9 +170,7 @@ def _(df_obs, plt, sns):
             split=True,
             inner="quartile",
             ax=axes["b"],
-        ).set(
-            title="number of genes with at least one detected mRNA molecule in a cell"
-        )
+        ).set(title="number of genes with at least one detected mRNA molecule in a cell")
         axes["b"].tick_params(axis="x", labelrotation=45)
 
         sns.scatterplot(
@@ -211,9 +205,7 @@ def _(np, pl, sp):
                 }
             )
             .sort("avg_pct_per_cell", descending=True)
-            .with_columns(
-                pl.col("avg_pct_per_cell").cum_sum().alias("cum_pct")
-            )
+            .with_columns(pl.col("avg_pct_per_cell").cum_sum().alias("cum_pct"))
         )
 
         return df_avg_gene_contrib
@@ -241,9 +233,7 @@ def _(df_gc, plt, sns):
 
         top = df_gc.head(30).to_pandas()
 
-        sns.barplot(
-            data=top, y="gene", x="avg_pct_per_cell", ax=axes["a"]
-        ).set(
+        sns.barplot(data=top, y="gene", x="avg_pct_per_cell", ax=axes["a"]).set(
             title="Top 30 genes: avg % of a cell's molecules",
             xlabel="avg % per cell",
             ylabel="",
@@ -310,9 +300,7 @@ def _(adata, genes_HKP, genes_ISG, sc):
     sc.pp.log1p(ad)
     sc.pp.highly_variable_genes(ad, n_top_genes=2000, batch_key="replicate")
 
-    gene_mask = ad.var["highly_variable"] | ad.var_names.isin(
-        genes_ISG + genes_HKP[:10]
-    )
+    gene_mask = ad.var["highly_variable"] | ad.var_names.isin(genes_ISG + genes_HKP[:10])
     ad = ad[:, gene_mask].copy()
     print(ad.shape)
     return (ad,)
@@ -334,9 +322,7 @@ def _(ad, itertools):
             for test in itertools.combinations(reps, n_test)
         ]
 
-    folds = make_traintest_replicates(
-        replicates=ad.obs["replicate"].unique().tolist(), n_test=1
-    )
+    folds = make_traintest_replicates(replicates=ad.obs["replicate"].unique().tolist(), n_test=1)
     train_replicates = folds[0]["train"]
     test_replicates = folds[0]["test"]
 
@@ -359,9 +345,7 @@ def _(
     trainval_idx = np.where(np.isin(replicates, train_replicates))[0]
     test_idx = np.where(np.isin(replicates, test_replicates))[0]
 
-    strata = (
-        ad.obs["replicate"].astype(str) + "_" + ad.obs["label"].astype(str)
-    ).to_numpy()
+    strata = (ad.obs["replicate"].astype(str) + "_" + ad.obs["label"].astype(str)).to_numpy()
     train_idx, val_idx = sk.model_selection.train_test_split(
         trainval_idx,
         test_size=0.1,
@@ -374,24 +358,24 @@ def _(
     x_val = x_all[val_idx]
     x_test = x_all[test_idx]
 
-    loader_train = DataLoader(
-        TensorDataset(x_train), batch_size=1024, shuffle=True
-    )
-    loader_val = DataLoader(
-        TensorDataset(x_val), batch_size=1024, shuffle=False
-    )
-    loader_test = DataLoader(
-        TensorDataset(x_test), batch_size=1024, shuffle=False
-    )
+    loader_train = DataLoader(TensorDataset(x_train), batch_size=1024, shuffle=True)
+    loader_val = DataLoader(TensorDataset(x_val), batch_size=1024, shuffle=False)
+    loader_test = DataLoader(TensorDataset(x_test), batch_size=1024, shuffle=False)
 
     print(
         f"train: {len(train_idx)} cells | val: {len(val_idx)} cells | test: {len(test_idx)} cells"
     )
 
-    print(
-        f"train/val donors: {sorted(train_replicates)}\ntest donors: {sorted(test_replicates)}"
+    print(f"train/val donors: {sorted(train_replicates)}\ntest donors: {sorted(test_replicates)}")
+    return (
+        loader_test,
+        loader_train,
+        loader_val,
+        test_idx,
+        trainval_idx,
+        x_all,
+        x_train,
     )
-    return loader_test, loader_train, loader_val, x_train
 
 
 @app.cell
@@ -487,9 +471,7 @@ def _(
     def score_function(engine):
         return -engine.state.metrics["loss"]
 
-    early_stop = EarlyStopping(
-        patience=20, score_function=score_function, trainer=trainer
-    )
+    early_stop = EarlyStopping(patience=20, score_function=score_function, trainer=trainer)
 
     val_evaluator.add_event_handler(Events.COMPLETED, early_stop)
 
@@ -502,9 +484,7 @@ def _(
         history.append({"epoch": engine.state.epoch, "train": tr, "val": va})
 
         if engine.state.epoch % 10 == 0:
-            print(
-                f"Epoch {engine.state.epoch:3d} | train MSE {tr:.4f} | val MSE {va:.4f}"
-            )
+            print(f"Epoch {engine.state.epoch:3d} | train MSE {tr:.4f} | val MSE {va:.4f}")
 
     return history, trainer, val_evaluator
 
@@ -528,14 +508,222 @@ def _(history, pl, plt):
 @app.cell
 def _(loader_test, loader_train, val_evaluator):
     val_evaluator.run(loader_train)
-    print(
-        f"train MSE: {val_evaluator.state.metrics['loss']:.4f}"
-    )
+    print(f"train MSE: {val_evaluator.state.metrics['loss']:.4f}")
 
     val_evaluator.run(loader_test)
+    print(f"test MSE for held-out donor: {val_evaluator.state.metrics['loss']:.4f}")
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Analysis
+    """)
+
+
+@app.cell
+def _(ad, device, model, np, test_idx, torch, trainval_idx, x_all):
+    model.eval()
+    with torch.no_grad():
+        h_all = model(x_all.to(device))[0].cpu().numpy()
+
+    labels = ad.obs["label"].astype(str).to_numpy()
+    stim_idx = np.where(labels == "stim")[0]
+    ctrl_idx = np.where(labels == "ctrl")[0]
+
+    idx_stim_train = np.intersect1d(trainval_idx, stim_idx)
+    idx_ctrl_train = np.intersect1d(trainval_idx, ctrl_idx)
+    idx_stim_test = np.intersect1d(test_idx, stim_idx)
+    idx_ctrl_test = np.intersect1d(test_idx, ctrl_idx)
+
+    h_stim_train = h_all[idx_stim_train]
+    h_ctrl_train = h_all[idx_ctrl_train]
+    h_stim_test = h_all[idx_stim_test]
+    h_ctrl_test = h_all[idx_ctrl_test]
+
     print(
-        f"test MSE for held-out donor: {val_evaluator.state.metrics['loss']:.4f}"
+        f"train: {len(h_stim_train)} stim, {len(h_ctrl_train)} ctrl | "
+        f"test: {len(h_stim_test)} stim, {len(h_ctrl_test)} ctrl"
     )
+    return (
+        h_ctrl_test,
+        h_ctrl_train,
+        h_stim_test,
+        h_stim_train,
+        idx_ctrl_test,
+        idx_stim_test,
+    )
+
+
+@app.cell
+def _(h_ctrl_train, h_stim_train):
+    # interferon direction from training donors only
+    v = h_stim_train.mean(0) - h_ctrl_train.mean(0)
+    return (v,)
+
+
+@app.cell
+def _(
+    ad,
+    device,
+    genes_ISG,
+    h_ctrl_test,
+    idx_stim_test,
+    model,
+    np,
+    torch,
+    v,
+    x_all,
+):
+    v_t = torch.tensor(v, device=device, dtype=torch.float32)
+    with torch.no_grad():
+        h_c = torch.tensor(h_ctrl_test, device=device)
+        x_base = model.dec(h_c).cpu().numpy()  # decoded ctrl (before)
+        x_steer = model.dec(h_c + v_t).cpu().numpy()  # decoded ctrl + v (after)
+
+    x_real_stim = x_all[idx_stim_test].numpy()  # real stimulated cells
+    ctypes = ad.obs["cell_type"].astype(str).to_numpy()
+    gene_names = ad.var_names.to_numpy()
+    isg_idx = np.where(np.isin(gene_names, genes_ISG))[0]
+    return ctypes, isg_idx, x_base, x_real_stim, x_steer
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Control cells after steering with interferon
+    """)
+
+
+@app.cell
+def _(
+    ad,
+    h_ctrl_test,
+    h_stim_test,
+    idx_ctrl_test,
+    idx_stim_test,
+    np,
+    plt,
+    sk,
+    sns,
+    v,
+):
+    def _():
+        ct = ad.obs["cell_type"].astype(str).to_numpy()
+        pca = sk.decomposition.PCA(n_components=2).fit(np.vstack([h_ctrl_test, h_stim_test]))
+
+        groups = [
+            ("real ctrl", pca.transform(h_ctrl_test), ct[idx_ctrl_test]),
+            ("real stim", pca.transform(h_stim_test), ct[idx_stim_test]),
+            ("ctrl + v", pca.transform(h_ctrl_test + v), ct[idx_ctrl_test]),
+        ]
+        types = sorted(np.unique(ct))
+        colors = dict(zip(types, sns.color_palette("tab10", len(types))))
+
+        fig, axes = plt.subplots(1, 2, figsize=(15, 5), constrained_layout=True)
+
+        # by condition
+        for name, p, _ in groups:
+            axes[0].scatter(p[:, 0], p[:, 1], s=3, alpha=0.4, label=name)
+        axes[0].legend(markerscale=4)
+        axes[0].set(title="By condition", xticks=[], yticks=[])
+
+        # by cell type (real ctrl/stim as faint dots, steered as crosses)
+        for name, p, c in groups:
+            for t in types:
+                m = c == t
+                if name == "ctrl + v":
+                    axes[1].scatter(p[m, 0], p[m, 1], s=12, marker="x", alpha=0.8, color=colors[t])
+                else:
+                    axes[1].scatter(
+                        p[m, 0],
+                        p[m, 1],
+                        s=3,
+                        alpha=0.15,
+                        color=colors[t],
+                        label=t if name == "real ctrl" else None,
+                    )
+        axes[1].legend(markerscale=4, fontsize=8)
+        axes[1].set(title="By cell type (× = ctrl + v)", xticks=[], yticks=[])
+        plt.suptitle("Held Out Donor")
+
+        return fig
+
+    _()
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Average expression of the Interferon genes in each cell
+    """)
+
+
+@app.cell
+def _(
+    ctypes,
+    idx_ctrl_test,
+    idx_stim_test,
+    isg_idx,
+    pl,
+    plt,
+    sns,
+    x_base,
+    x_real_stim,
+    x_steer,
+):
+    def _():
+        score = lambda M: M[:, isg_idx].mean(1)
+        df = pl.concat(
+            [
+                pl.DataFrame(
+                    {
+                        "cell_type": ctypes[idx_ctrl_test],
+                        "state": "ctrl",
+                        "ifn_score": score(x_base),
+                    }
+                ),
+                pl.DataFrame(
+                    {
+                        "cell_type": ctypes[idx_ctrl_test],
+                        "state": "ctrl + v",
+                        "ifn_score": score(x_steer),
+                    }
+                ),
+                pl.DataFrame(
+                    {
+                        "cell_type": ctypes[idx_stim_test],
+                        "state": "real stim",
+                        "ifn_score": score(x_real_stim),
+                    }
+                ),
+            ]
+        )
+        fig, ax = plt.subplots(figsize=(15, 5))
+        sns.violinplot(
+            df.to_pandas(),
+            x="cell_type",
+            y="ifn_score",
+            hue="state",
+            cut=0,
+            inner="quartile",
+            ax=ax,
+        )
+        ax.tick_params(axis="x", labelrotation=45)
+        ax.set(xlabel="", title="Interferon score per cell")
+        return fig
+
+    _()
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _():
+    return
 
 
 if __name__ == "__main__":
